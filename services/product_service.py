@@ -116,9 +116,8 @@ class ProductService:
             self.con.ping(reconnect=True)
             with self.con.cursor() as cursor:
                 # Verificar si ya existe un producto con las mismas características
-                check_sql = """SELECT id, stock FROM producto WHERE categoria = %s AND marca = %s AND nombre = %s AND talla = %s"""
-                cursor.execute(check_sql, (
-                    product_data.categoria, 
+                check_sql = """SELECT id, stock FROM producto WHERE marca = %s AND nombre = %s AND talla = %s"""
+                cursor.execute(check_sql, ( 
                     product_data.marca, 
                     product_data.nombre, 
                     product_data.talla, 
@@ -144,11 +143,11 @@ class ProductService:
                     # Si no existe, insertamos como nuevo producto
                     insert_sql = """
                         INSERT INTO producto 
-                        (categoria, marca, nombre, talla, precio, numreferencia, proveedor, stock, estado) 
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        (marca, nombre, talla, precio, numreferencia, proveedor, stock, estado) 
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                     """
                     cursor.execute(insert_sql, (
-                        product_data.categoria, product_data.marca, product_data.nombre,
+                        product_data.marca, product_data.nombre,
                         product_data.talla, product_data.precio, product_data.numreferencia,
                         product_data.proveedor, product_data.stock, product_data.estado
                     ))
