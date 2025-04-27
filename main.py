@@ -5,12 +5,12 @@ from fastapi import FastAPI, status
 from fastapi.middleware.cors import CORSMiddleware
 from routes.routes import routes_p 
 
-app=FastAPI()
-app.title= "KKM BD"
-app.version= "0.0.1"
-app.description= "API DESCRIPTION"
+app = FastAPI()
+app.title = "KKM BD"
+app.version = "0.0.1"
+app.description = "API DESCRIPTION"
 
-#Carga de variables de entorno
+# Carga de variables de entorno
 load_dotenv()
 
 app.include_router(routes_p)
@@ -30,9 +30,8 @@ app.add_middleware(
     tags=["APP"]
 )
 def message():
-    """Home API
-    Returns :
-        Message
-    """
+    """Home API"""
     return HTMLResponse("<h1> Ejercicio de Pruebas </h1>")
 
+if __name__ == "__main__":
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

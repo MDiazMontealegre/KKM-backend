@@ -4,7 +4,6 @@ from pydantic import BaseModel
 #Modelo de la tabla productos
 
 class Product(BaseModel):
-    categoria: str
     marca: str 
     nombre: str
     talla: float
@@ -12,4 +11,4 @@ class Product(BaseModel):
     numreferencia: str
     proveedor: str
     stock: int
-    estado: Optional[int]=1    
+    estado: bool 

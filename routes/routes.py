@@ -2,10 +2,9 @@ from fastapi import APIRouter, Body
 from services.product_service import ProductService
 from models.product_model import Product
 
-routes_p= APIRouter(prefix="/product",tags=["Product"])
+routes_p = APIRouter(prefix="/product", tags=["Product"])
 
-product_service= ProductService()
-user_model= Product
+product_service = ProductService()
 
 @routes_p.get("/get-products")
 async def get_all_products():
@@ -22,4 +21,3 @@ async def update_product_stock(product_id: int, stock: int = Body(..., embed=Tru
 @routes_p.post("/add-product")
 async def add_product(product: Product):
     return await product_service.add_product(product)
-
