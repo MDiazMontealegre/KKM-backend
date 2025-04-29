@@ -31,18 +31,22 @@ routes_u = APIRouter(prefix="/user", tags=["User"])
 
 user_service = UserService()
 
-@routes_u.post("/users/")
-def create_user(user: User):
-    return UserService.create_user(user)
+@routes_u.get("/get-users/")
+async def get_all_users():
+    return await user_service.get_users()
 
-@routes_u.put("/users/{user_id}")
-def update_user(user_id: int, user_update: dict = Body(...)):
-    return UserService.update_user(user_id, user_update)
+@routes_u.get("/get-user/{user_id}")
+async def get_user(user_id: int):
+    return await user_service.get_user_by_id(user_id)
 
-@routes_u.get("/users/")
-def get_users():
-    return UserService.get_users()
+@routes_u.post("/create-user/")
+async def create_user(user: User):
+    return await user_service.create_user(user)
 
-@routes_u.get("/users/{user_id}")
-def get_user(user_id: int):
-    return UserService.get_user_by_id(user_id)
+@routes_u.put("/update-user/{user_id}")
+async def update_user(user_id: int, contrasena: str = Body(..., embed=True)):
+    return await user_service.update_user(user_id, contrasena)
+
+
+
+

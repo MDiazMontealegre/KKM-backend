@@ -1,88 +1,129 @@
 from db.db_postgres import get_db_connection
 from fastapi import HTTPException
 from psycopg2.extras import RealDictCursor
+from fastapi.responses import JSONResponse
+from models.user_model import User
 
 class UserService:
 
-    @staticmethod
-    def create_user(user_data: dict):
-        conn = get_db_connection()
-        cur = conn.cursor(cursor_factory=RealDictCursor)
+    async def get_users(self):
+        """Consulta de todos los usuarios"""
+        con = None
+        try:
+            con = get_db_connection()
+            with con.cursor(cursor_factory=RealDictCursor) as cursor:
+                cursor.execute("SELECT * FROM usuario")
+                users = cursor.fetchall()
+                return JSONResponse(
+                    status_code=200,
+                    content={"success": True, "message": "Usuarios listados correctamente", "data": users or []}
+                )
+        except Exception as e:
+            return JSONResponse(
+                status_code=500,
+                content={"success": False, "message": f"Error al consultar los usuarios: {str(e)}", "data": None}
+            )
+        finally:
+            if con:
+                con.close()
+    
+    async def get_user_by_id(self, user_id: int):
+        """Consulta de un usuario por su ID"""
+        con = None
+        try:
+            con = get_db_connection()
+            with con.cursor(cursor_factory=RealDictCursor) as cursor:
+                cursor.execute("SELECT * FROM usuario WHERE id = %s", (user_id,))
+                user = cursor.fetchone()
 
-        # Verificar si ya existe el username
-        cur.execute("SELECT * FROM usuario WHERE nombre = %s", (user_data["nombre"],))
-        if cur.fetchone():
-            cur.close()
-            conn.close()
-            raise HTTPException(status_code=400, detail="Nombre de usuario ya registrado")
+                if user:
+                    return JSONResponse(
+                        status_code=200,
+                        content={"success": True, "message": "Usuario encontrado", "data": user}
+                    )
+                else:
+                    return JSONResponse(
+                        status_code=404,
+                        content={"success": False, "message": "Usuario no encontrado", "data": None}
+                    )
+        except Exception as e:
+            return JSONResponse(
+                status_code=500,
+                content={"success": False, "message": f"Error al consultar el usuario: {str(e)}", "data": None}
+            )
+        finally:
+            if con:
+                con.close()
 
-        query = """
-            INSERT INTO usuario (nombre, correo, contrasena, rol_id, estado)
-            VALUES (%s, %s, %s, %s, %s)
-            RETURNING *;
-        """
-        cur.execute(query, (
-            user_data["nombre"],
-            user_data["correo"],
-            user_data["contrasena"],
-            user_data["rol_id"],
-            user_data["estado"]
-        ))
+    async def create_user(self, user_data: User):
+            """Crear un nuevo usuario"""
+            conn= None
+            try:
+                conn = get_db_connection()
+                with conn.cursor() as cursor:
+                    # Verificar si ya existe el usuario
+                    cursor.execute("SELECT * FROM usuario WHERE correo = %s", (user_data.correo,))
+                    if cursor.fetchone():
+                        cursor.close()
+                        conn.close()
+                        raise HTTPException(status_code=400, detail="Usuario ya registrado")
 
-        new_user = cur.fetchone()
-        conn.commit()
-        cur.close()
-        conn.close()
-        return new_user
+                    cursor.execute(
+                        """
+                        INSERT INTO usuario (nombre, correo, contrasena, rol_id, estado)
+                        VALUES (%s, %s, %s, %s, %s)
+                        RETURNING id
+                        """,
+                        (
+                            user_data.nombre,
+                            user_data.correo,
+                            user_data.contrasena,
+                            user_data.rol_id,
+                            user_data.estado
+                        )
+                    )
+                    new_user_id = cursor.fetchone()[0]
+                    conn.commit()
+                    cursor.close()
+                    conn.close()
 
-    @staticmethod
-    def update_user(user_id: int, user_update: dict):
-        conn = get_db_connection()
-        cur = conn.cursor(cursor_factory=RealDictCursor)
+                    return JSONResponse(
+                        status_code=201,
+                        content={"success": True, "message": "Usuario registrado correctamente.", "data": {"user_id": new_user_id}}
+                    )
 
-        cur.execute("SELECT * FROM usuario WHERE id = %s", (user_id,))
-        user = cur.fetchone()
-        if not user:
-            cur.close()
-            conn.close()
-            raise HTTPException(status_code=404, detail="Usuario no encontrado")
+            except Exception as e:
+                if conn:
+                    conn.rollback()
+                return JSONResponse(
+                    status_code=500,
+                    content={"success": False, "message": f"Error al registrar usuario: {str(e)}", "data": None}
+                )
+    
+    async def update_user(self, user_id: int, new_contrasena: int):
+        """Actualizar la contraseña de un usuario"""
+        con = None
+        try:
+            con = get_db_connection()
+            with con.cursor() as cursor:
+                cursor.execute("UPDATE usuario SET contrasena = %s WHERE id = %s", (new_contrasena, user_id))
+                con.commit()
 
-        fields = []
-        values = []
-
-        for key, value in user_update.items():
-            fields.append(f"{key} = %s")
-            values.append(value)
-
-        values.append(user_id)
-        set_clause = ", ".join(fields)
-
-        cur.execute(f"UPDATE usuario SET {set_clause} WHERE id = %s RETURNING *;", tuple(values))
-
-        updated_user = cur.fetchone()
-        conn.commit()
-        cur.close()
-        conn.close()
-        return updated_user
-
-    @staticmethod
-    def get_users():
-        conn = get_db_connection()
-        cur = conn.cursor(cursor_factory=RealDictCursor)
-        cur.execute("SELECT * FROM usuario")
-        users = cur.fetchall()
-        cur.close()
-        conn.close()
-        return users
-
-    @staticmethod
-    def get_user_by_id(user_id: int):
-        conn = get_db_connection()
-        cur = conn.cursor(cursor_factory=RealDictCursor)
-        cur.execute("SELECT * FROM usuario WHERE id = %s", (user_id,))
-        user = cur.fetchone()
-        cur.close()
-        conn.close()
-        if not user:
-            raise HTTPException(status_code=404, detail="Usuario no encontrado")
-        return user
+                if cursor.rowcount > 0:
+                    return JSONResponse(
+                        status_code=200,
+                        content={"success": True, "message": "Contraseña actualizada correctamente", "data": {"id": user_id, "nueva_contrasena": new_contrasena}}
+                    )
+                else:
+                    return JSONResponse(
+                        status_code=404,
+                        content={"success": False, "message": "Usuario no encontrado para actualizar", "data": None}
+                    )
+        except Exception as e:
+            return JSONResponse(
+                status_code=500,
+                content={"success": False, "message": f"Error al actualizar contraseña: {str(e)}", "data": None}
+            )
+        finally:
+            if con:
+                con.close()
