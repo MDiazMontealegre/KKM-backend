@@ -4,6 +4,7 @@ import uvicorn
 from fastapi import FastAPI, status
 from fastapi.middleware.cors import CORSMiddleware
 from routes.routes import routes_p 
+from routes.routes import routes_u
 
 app = FastAPI()
 app.title = "KKM BD"
@@ -14,6 +15,7 @@ app.description = "API DESCRIPTION"
 load_dotenv()
 
 app.include_router(routes_p)
+app.include_router(routes_u)
 
 app.add_middleware(
     CORSMiddleware,
