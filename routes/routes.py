@@ -10,6 +10,7 @@ from models.rol_model import Rol
 routes_p = APIRouter(prefix="/product", tags=["Product"])
 
 product_service = ProductService()
+product_model= Product
 
 @routes_p.get("/get-products")
 async def get_all_products():
@@ -36,6 +37,7 @@ async def change_product_status(product_id: int):
 routes_u = APIRouter(prefix="/user", tags=["User"])
 
 user_service = UserService()
+user_model= User
 
 @routes_u.get("/get-users/")
 async def get_all_users():
@@ -59,6 +61,7 @@ async def update_user(user_id: int, contrasena: str = Body(..., embed=True)):
 routes_r= APIRouter(prefix="/rol", tags=["Rol"])
 
 rol_service= RolService()
+rol_model= Rol
 
 @routes_r.get("/get-roles/")
 async def get_all_roles():

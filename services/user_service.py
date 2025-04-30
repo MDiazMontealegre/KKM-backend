@@ -6,26 +6,27 @@ from models.user_model import User
 
 class UserService:
 
+    def __init__(self):
+        """Inicializa la conexión a la base de datos."""
+        self.con = get_db_connection()
+        if self.con is None:
+            raise Exception("No se pudo establecer conexión con la base de datos")
+
     async def get_users(self):
         """Consulta de todos los usuarios"""
         con = None
         try:
             con = get_db_connection()
             with con.cursor(cursor_factory=RealDictCursor) as cursor:
-                cursor.execute("SELECT * FROM usuario")
+                sql= """SELECT u.id, u.nombre, u.correo, u.contrasena, u.estado 
+                        FROM usuario u
+                        JOIN rol r ON u.rol_id = r.id"""
+                cursor.execute(sql)
                 users = cursor.fetchall()
-                return JSONResponse(
-                    status_code=200,
-                    content={"success": True, "message": "Usuarios listados correctamente", "data": users or []}
-                )
+                return JSONResponse(content={"success": True, "data": users}, status_code=200)
+                
         except Exception as e:
-            return JSONResponse(
-                status_code=500,
-                content={"success": False, "message": f"Error al consultar los usuarios: {str(e)}", "data": None}
-            )
-        finally:
-            if con:
-                con.close()
+            return JSONResponse(content={"success": False, "message": f"Error al consultar bolsillos: {str(e)}"}, status_code=500)
     
     async def get_user_by_id(self, user_id: int):
         """Consulta de un usuario por su ID"""
@@ -33,27 +34,20 @@ class UserService:
         try:
             con = get_db_connection()
             with con.cursor(cursor_factory=RealDictCursor) as cursor:
-                cursor.execute("SELECT * FROM usuario WHERE id = %s", (user_id,))
+                sql = """SELECT u.nombre, u.correo, u.contrasena, u.estado 
+                        FROM usuario u
+                        JOIN rol r ON u.rol_id = r.id
+                        WHERE r.id = %s"""
+                cursor.execute(sql, (user_id,))
                 user = cursor.fetchone()
 
                 if user:
-                    return JSONResponse(
-                        status_code=200,
-                        content={"success": True, "message": "Usuario encontrado", "data": user}
-                    )
+                    return JSONResponse(content={"success": True, "data": user}, status_code=200)
+                    
                 else:
-                    return JSONResponse(
-                        status_code=404,
-                        content={"success": False, "message": "Usuario no encontrado", "data": None}
-                    )
+                    return JSONResponse(content={"success": False, "message": "Usuario no encontrado."}, status_code=404)
         except Exception as e:
-            return JSONResponse(
-                status_code=500,
-                content={"success": False, "message": f"Error al consultar el usuario: {str(e)}", "data": None}
-            )
-        finally:
-            if con:
-                con.close()
+            return JSONResponse(content={"success": False, "message": f"Error al consultar el usuario: {str(e)}"}, status_code=500)
 
     async def create_user(self, user_data: User):
             """Crear un nuevo usuario"""
@@ -67,40 +61,18 @@ class UserService:
                         cursor.close()
                         conn.close()
                         raise HTTPException(status_code=400, detail="Usuario ya registrado")
-                    cursor.execute("SELECT * FROM rol WHERE id = %s", (user_data.rol_id))
-                    if not cursor.fetchone():
-                        raise HTTPException(status_code=400, detaiñ="El rol especificado no existe")
-                    cursor.execute(
-                        """
-                        INSERT INTO usuario (nombre, correo, contrasena, rol_id, estado)
-                        VALUES (%s, %s, %s, %s, %s)
-                        RETURNING id
-                        """,
-                        (
-                            user_data.nombre,
-                            user_data.correo,
-                            user_data.contrasena,
-                            user_data.rol_id,
-                            user_data.estado
-                        )
-                    )
-                    new_user_id = cursor.fetchone()[0]
+                    
+                    sql = "INSERT INTO usuario (nombre, correo, contrasena, rol_id, estado) VALUES (%s, %s, %s, %s, %s)"
+                    cursor.execute(sql, (user_data.nombre, user_data.correo, user_data.contrasena, user_data.rol_id, user_data.estado))
                     conn.commit()
-                    cursor.close()
-                    conn.close()
 
-                    return JSONResponse(
-                        status_code=201,
-                        content={"success": True, "message": "Usuario registrado correctamente.", "data": {"user_id": new_user_id}}
-                    )
-
+                    if cursor.lastrowid:
+                        return JSONResponse(content={"success": True, "message": "Usuario creado correctamente.", "id": cursor.lastrowid}, status_code=201)
+                    else:
+                        return JSONResponse(content={"success": False, "message": "No se pudo crear el usuario."}, status_code=400)
             except Exception as e:
-                if conn:
-                    conn.rollback()
-                return JSONResponse(
-                    status_code=500,
-                    content={"success": False, "message": f"Error al registrar usuario: {str(e)}", "data": None}
-                )
+                self.con.rollback()
+                return JSONResponse(content={"success": False, "message": f"Error al crear Usuario: {str(e)}"}, status_code=500)          
     
     async def update_user(self, user_id: int, new_contrasena: int):
         """Actualizar la contraseña de un usuario"""
@@ -129,3 +101,8 @@ class UserService:
         finally:
             if con:
                 con.close()
+
+    def close_connection(self):
+        """Cierra la conexión con la base de datos."""
+        if self.con:
+            self.con.close()
