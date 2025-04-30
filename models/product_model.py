@@ -9,6 +9,7 @@ class Product(BaseModel):
     talla: float
     precio: float
     numreferencia: str
+    tipo: str
     proveedor: str
-    stock: int
+    categoria_id: int
     estado: bool 

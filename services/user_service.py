@@ -67,7 +67,9 @@ class UserService:
                         cursor.close()
                         conn.close()
                         raise HTTPException(status_code=400, detail="Usuario ya registrado")
-
+                    cursor.execute("SELECT * FROM rol WHERE id = %s", (user_data.rol_id))
+                    if not cursor.fetchone():
+                        raise HTTPException(status_code=400, detaiñ="El rol especificado no existe")
                     cursor.execute(
                         """
                         INSERT INTO usuario (nombre, correo, contrasena, rol_id, estado)

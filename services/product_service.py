@@ -6,6 +6,12 @@ from models.product_model import Product
 
 class ProductService:
 
+    def __init__(self):
+        """Inicializa la conexión a la base de datos."""
+        self.con = get_db_connection()  # Obtiene la conexión directamente
+        if self.con is None:
+            raise Exception("No se pudo establecer conexión con la base de datos")
+
     async def get_products(self):
         """Consulta de todos los productos"""
         con = None
@@ -55,91 +61,133 @@ class ProductService:
             if con:
                 con.close()
 
-    async def update_stock(self, product_id: int, new_stock: int):
-        """Actualizar el stock de un producto"""
-        con = None
+    async def update_product(self, product_id: int, product_data: Product):
+        """
+        Actualiza los datos de un producto excepto el campo 'estado'.
+        """
         try:
-            con = get_db_connection()
-            with con.cursor() as cursor:
-                cursor.execute("UPDATE producto SET stock = %s WHERE id = %s", (new_stock, product_id))
-                con.commit()
+            #self.con.ping(reconnect=True)
+            with self.con.cursor() as cursor:
+                # Verificar si el producto existe
+                check_sql = "SELECT COUNT(*) FROM producto WHERE id=%s"
+                cursor.execute(check_sql, (product_id,))
+                result = cursor.fetchone()
+
+                if result[0] == 0:
+                    return JSONResponse(content={"success": False, "message": "Usuario no encontrado."}, status_code=404)
+
+                # Actualizar campos (excepto estado)
+                update_sql = """
+                    UPDATE producto
+                    SET marca=%s, nombre=%s, talla=%s, precio=%s, numreferencia=%s, proveedor=%s, tipo=%s, categoria_id=%s
+                    WHERE id=%s
+                """
+                cursor.execute(update_sql, (
+                    product_data.marca,
+                    product_data.nombre,
+                    product_data.talla,
+                    product_data.precio,
+                    product_data.numreferencia,
+                    product_data.proveedor,
+                    product_data.tipo,
+                    product_data.categoria_id,
+                    product_id
+                ))
+                self.con.commit()
 
                 if cursor.rowcount > 0:
-                    return JSONResponse(
-                        status_code=200,
-                        content={"success": True, "message": "Stock actualizado correctamente", "data": {"id": product_id, "nuevo_stock": new_stock}}
-                    )
+                    return JSONResponse(content={"success": True, "message": "Usuario actualizado correctamente."}, status_code=200)
                 else:
-                    return JSONResponse(
-                        status_code=404,
-                        content={"success": False, "message": "Producto no encontrado para actualizar", "data": None}
-                    )
+                    return JSONResponse(content={"success": False, "message": "No se realizaron cambios."}, status_code=409)
+
         except Exception as e:
-            return JSONResponse(
-                status_code=500,
-                content={"success": False, "message": f"Error al actualizar el stock: {str(e)}", "data": None}
-            )
+            self.con.rollback()
+            return JSONResponse(content={"success": False, "message": f"Error al actualizar usuario: {str(e)}"}, status_code=500)
         finally:
-            if con:
-                con.close()
+            self.close_connection()
 
     async def add_product(self, product_data: Product):
-        """Agregar un nuevo producto o actualizar el stock si ya existe"""
+        """Agregar un nuevo producto"""
         con = None
         try:
             con = get_db_connection()
             with con.cursor() as cursor:
-                # Verificar si el producto ya existe
+                # Insertar nuevo producto
                 cursor.execute(
-                    "SELECT id, stock FROM producto WHERE marca = %s AND nombre = %s AND talla = %s",
-                    (product_data.marca, product_data.nombre, product_data.talla)
+                    """
+                    INSERT INTO producto 
+                    (marca, nombre, talla, precio, numreferencia, proveedor, tipo, categoria_id, estado) 
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    RETURNING id
+                    """,
+                    (
+                        product_data.marca, product_data.nombre,
+                        product_data.talla, product_data.precio, product_data.numreferencia,
+                        product_data.proveedor, product_data.tipo, product_data.categoria_id, product_data.estado
+                    )
                 )
-                existing_product = cursor.fetchone()
+                new_product_id = cursor.fetchone()[0]
+                con.commit()
 
-                if existing_product:
-                    existing_product_id = existing_product[0]
-                    existing_stock = existing_product[1]
-                    new_stock = existing_stock + product_data.stock
-
-                    cursor.execute(
-                        "UPDATE producto SET stock = %s WHERE id = %s",
-                        (new_stock, existing_product_id)
-                    )
-                    con.commit()
-
-                    return JSONResponse(
-                        status_code=200,
-                        content={"success": True, "message": "Producto existente, stock actualizado.", "data": {"product_id": existing_product_id, "nuevo_stock": new_stock}}
-                    )
-                else:
-                    # Insertar nuevo producto
-                    cursor.execute(
-                        """
-                        INSERT INTO producto 
-                        (marca, nombre, talla, precio, numreferencia, proveedor, stock, estado) 
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                        RETURNING id
-                        """,
-                        (
-                            product_data.marca, product_data.nombre,
-                            product_data.talla, product_data.precio, product_data.numreferencia,
-                            product_data.proveedor, product_data.stock, product_data.estado
-                        )
-                    )
-                    new_product_id = cursor.fetchone()[0]
-                    con.commit()
-
-                    return JSONResponse(
-                        status_code=201,
-                        content={"success": True, "message": "Producto registrado correctamente.", "data": {"product_id": new_product_id}}
-                    )
+                return JSONResponse(
+                    status_code=201,
+                    content={
+                        "success": True,
+                        "message": "Producto registrado correctamente.",
+                        "data": {"product_id": new_product_id}
+                    }
+                )
         except Exception as e:
             if con:
                 con.rollback()
             return JSONResponse(
                 status_code=500,
-                content={"success": False, "message": f"Error al registrar o actualizar el producto: {str(e)}", "data": None}
+                content={
+                    "success": False,
+                    "message": f"Error al registrar el producto: {str(e)}",
+                    "data": None
+                }
             )
         finally:
             if con:
                 con.close()
+
+    async def toggle_product_status(self, product_id: int):
+        con = None
+        try:
+            con = get_db_connection()  # Asegura una nueva conexión fresca
+            with con.cursor() as cursor:
+                # Obtener estado actual
+                get_estado_sql = "SELECT estado FROM producto WHERE id=%s"
+                cursor.execute(get_estado_sql, (product_id,))
+                result = cursor.fetchone()
+
+                if not result:
+                    return JSONResponse(content={"success": False, "message": "Producto no encontrado."}, status_code=404)
+
+                estado_actual = bool(result[0])
+                nuevo_estado = not estado_actual
+
+                update_sql = "UPDATE producto SET estado=%s WHERE id=%s"
+                cursor.execute(update_sql, (nuevo_estado, product_id))
+                con.commit()
+
+                return JSONResponse(content={
+                    "success": True,
+                    "message": "Estado actualizado correctamente.",
+                    "estado_actual": estado_actual,
+                    "nuevo_estado": nuevo_estado
+                }, status_code=200)
+
+        except Exception as e:
+            if con:
+                con.rollback()
+            return JSONResponse(content={"success": False, "message": f"Error al cambiar estado: {str(e)}"}, status_code=500)
+
+        finally:
+            if con:
+                con.close()
+
+    def close_connection(self):
+        """Llama al cierre de conexión de la base de datos."""
+        self.con.close()

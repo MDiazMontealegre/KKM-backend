@@ -5,6 +5,7 @@ from fastapi import FastAPI, status
 from fastapi.middleware.cors import CORSMiddleware
 from routes.routes import routes_p 
 from routes.routes import routes_u
+from routes.routes import routes_r
 
 app = FastAPI()
 app.title = "KKM BD"
@@ -16,6 +17,7 @@ load_dotenv()
 
 app.include_router(routes_p)
 app.include_router(routes_u)
+app.include_router(routes_r)
 
 app.add_middleware(
     CORSMiddleware,
