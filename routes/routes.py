@@ -55,6 +55,10 @@ async def create_user(user: User):
 async def update_user(user_id: int, contrasena: str = Body(..., embed=True)):
     return await user_service.update_user(user_id, contrasena)
 
+@routes_u.patch("/change-status/{user_id}")
+async def change_user_status(user_id: int):
+    return await user_service.toggle_user_status(user_id)
+
 
 # rutas rol
 

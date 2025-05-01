@@ -18,7 +18,7 @@ class UserService:
         try:
             con = get_db_connection()
             with con.cursor(cursor_factory=RealDictCursor) as cursor:
-                sql= """SELECT u.id, u.nombre, u.correo, u.contrasena, u.estado 
+                sql= """SELECT u.id, u.nombre as nombreu, u.correo, u.contrasena, r.nombre, u.estado 
                         FROM usuario u
                         JOIN rol r ON u.rol_id = r.id"""
                 cursor.execute(sql)
@@ -98,6 +98,42 @@ class UserService:
                 status_code=500,
                 content={"success": False, "message": f"Error al actualizar contraseña: {str(e)}", "data": None}
             )
+        finally:
+            if con:
+                con.close()
+
+    async def toggle_user_status(self, user_id: int):
+        con = None
+        try:
+            con = get_db_connection()  # Asegura una nueva conexión fresca
+            with con.cursor() as cursor:
+                # Obtener estado actual
+                get_estado_sql = "SELECT estado FROM usuario WHERE id=%s"
+                cursor.execute(get_estado_sql, (user_id,))
+                result = cursor.fetchone()
+
+                if not result:
+                    return JSONResponse(content={"success": False, "message": "Usuario no encontrado."}, status_code=404)
+
+                estado_actual = bool(result[0])
+                nuevo_estado = not estado_actual
+
+                update_sql = "UPDATE usuario SET estado=%s WHERE id=%s"
+                cursor.execute(update_sql, (nuevo_estado, user_id))
+                con.commit()
+
+                return JSONResponse(content={
+                    "success": True,
+                    "message": "Estado actualizado correctamente.",
+                    "estado_actual": estado_actual,
+                    "nuevo_estado": nuevo_estado
+                }, status_code=200)
+
+        except Exception as e:
+            if con:
+                con.rollback()
+            return JSONResponse(content={"success": False, "message": f"Error al cambiar estado: {str(e)}"}, status_code=500)
+
         finally:
             if con:
                 con.close()
