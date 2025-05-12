@@ -1,6 +1,7 @@
 from db.db_postgres import get_db_connection
 from fastapi import HTTPException
 from psycopg2.extras import RealDictCursor
+from psycopg2.extras import RealDictCursor
 from fastapi.responses import JSONResponse
 from models.user_model import User
 
@@ -34,7 +35,7 @@ class UserService:
         try:
             con = get_db_connection()
             with con.cursor(cursor_factory=RealDictCursor) as cursor:
-                sql = """SELECT u.nombre, u.correo, u.contrasena, u.estado 
+                sql = """SELECT u.nombre as nombreu, u.correo, u.contrasena, r.nombre, u.estado 
                         FROM usuario u
                         JOIN rol r ON u.rol_id = r.id
                         WHERE r.id = %s"""
