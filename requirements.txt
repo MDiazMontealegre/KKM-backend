@@ -1,6 +1,0 @@
-fastapi
-uvicorn[standard]
-python-dotenv
-openpyxl
-psycopg2-binary
-sqlalchemy
