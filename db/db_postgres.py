@@ -23,10 +23,13 @@ def get_db_connection():
     )
 
 # Construir la URL de conexión desde variables de entorno
-DATABASE_URL = (
-    f"postgresql://{os.getenv('POSTGRES_USER')}:{os.getenv('POSTGRES_PASSWORD')}"
-    f"@{os.getenv('POSTGRES_HOST')}:{os.getenv('POSTGRES_PORT')}/{os.getenv('POSTGRES_DATABASE')}"
-)
+    
+#DATABASE_URL = (
+#    f"postgresql://{os.getenv('POSTGRES_USER')}:{os.getenv('POSTGRES_PASSWORD')}"
+#    f"@{os.getenv('POSTGRES_HOST')}:{os.getenv('POSTGRES_PORT')}/{os.getenv('POSTGRES_DATABASE')}"
+#)
+
+DATABASE_URL = "postgresql://db_kkm_user:q14Z24jCqyNmmtHQRkUjsrVfqcT8zVXz@dpg-d1mmn5jipnbc73c4l380-a.oregon-postgres.render.com/db_kkm"
 
 # Crear el motor SQLAlchemy
 engine = create_engine(DATABASE_URL)
