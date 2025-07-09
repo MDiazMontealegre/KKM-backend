@@ -8,11 +8,16 @@ router = APIRouter()
 
 @router.post("/login")
 def login(data: LoginSchema, db: Session = Depends(get_db_connection)):
-    usuario = db.query(Usuario).filter(Usuario.correo == data.correo).first()
-    if not usuario:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
-    
-    if usuario.contrasena != data.contrasena:
-        raise HTTPException(status_code=401, detail="Contraseña incorrecta")
-    
-    return {"mensaje": "Inicio de sesión exitoso", "usuario_id": usuario.id}
+    try:
+        user = db.query(Usuario).filter(Usuario.correo == data.correo).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        
+        if user.contrasena != data.contrasena:
+            raise HTTPException(status_code=401, detail="Contraseña incorrecta")
+        
+        return {"mensaje": "Inicio de sesión exitoso", "usuario_id": user.id}
+
+    except Exception as e:
+        print("💥 Error en login:", str(e))  # Log real del error
+        raise HTTPException(status_code=500, detail="Error interno del servidor")
