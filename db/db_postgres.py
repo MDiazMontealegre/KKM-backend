@@ -12,8 +12,9 @@ POSTGRES_HOST = os.environ["POSTGRES_HOST"]
 POSTGRES_PORT = os.environ["POSTGRES_PORT"]
 POSTGRES_DATABASE = os.environ["POSTGRES_DATABASE"]
 
+"""
 def get_db_connection():
-    """Retorna una nueva conexión a la base de datos"""
+    
     return psycopg2.connect(
         host=POSTGRES_HOST,
         user=POSTGRES_USER,
@@ -21,7 +22,7 @@ def get_db_connection():
         dbname=POSTGRES_DATABASE,
         port=int(POSTGRES_PORT)
     )
-
+"""
 # Construir la URL de conexión desde variables de entorno
     
 #DATABASE_URL = (
@@ -38,7 +39,7 @@ engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # Función para obtener sesión en las rutas
-def get_db():
+def get_db_connection():
     db = SessionLocal()
     try:
         yield db
