@@ -12,23 +12,7 @@ POSTGRES_HOST = os.environ["POSTGRES_HOST"]
 POSTGRES_PORT = os.environ["POSTGRES_PORT"]
 POSTGRES_DATABASE = os.environ["POSTGRES_DATABASE"]
 
-"""
-def get_db_connection():
-    
-    return psycopg2.connect(
-        host=POSTGRES_HOST,
-        user=POSTGRES_USER,
-        password=POSTGRES_PASSWORD,
-        dbname=POSTGRES_DATABASE,
-        port=int(POSTGRES_PORT)
-    )
-"""
 # Construir la URL de conexión desde variables de entorno
-    
-#DATABASE_URL = (
-#    f"postgresql://{os.getenv('POSTGRES_USER')}:{os.getenv('POSTGRES_PASSWORD')}"
-#    f"@{os.getenv('POSTGRES_HOST')}:{os.getenv('POSTGRES_PORT')}/{os.getenv('POSTGRES_DATABASE')}"
-#)
 
 DATABASE_URL = "postgresql://db_kkm_user:q14Z24jCqyNmmtHQRkUjsrVfqcT8zVXz@dpg-d1mmn5jipnbc73c4l380-a.oregon-postgres.render.com/db_kkm"
 
@@ -39,9 +23,19 @@ engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # Función para obtener sesión en las rutas
-def get_db_connection():
+def get_db_session():
     db = SessionLocal()
     try:
         yield db
     finally:
         db.close()
+
+# ✅ Usar en servicios que requieren cursor (psycopg2)
+def get_db_connection():
+    return psycopg2.connect(
+        host=POSTGRES_HOST,
+        user=POSTGRES_USER,
+        password=POSTGRES_PASSWORD,
+        dbname=POSTGRES_DATABASE,
+        port=int(POSTGRES_PORT)
+    )
