@@ -2,7 +2,7 @@ from fastapi import APIRouter, Body, Depends, HTTPException, Request
 from schemas.login_schema import LoginSchema
 from db.db_postgres import get_db_connection
 from sqlalchemy.orm import Session
-from models.user_model import Usuario
+from models.user_model import User
 from services.product_service import ProductService
 from services.user_service import UserService
 from services.rol_service import RolService
@@ -85,7 +85,7 @@ routes_auth = APIRouter(prefix="/auth", tags=["Auth"])
 
 @routes_auth.post("/login")
 def login(data: LoginSchema, db: Session = Depends(get_db_connection)):
-    usuario = db.query(Usuario).filter(Usuario.correo == data.correo).first()
+    usuario = db.query(User).filter(User.correo == data.correo).first()
     if not usuario:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     
