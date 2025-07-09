@@ -9,6 +9,8 @@ router = APIRouter()
 @router.post("/login")
 def login(data: LoginSchema, db: Session = Depends(get_db_connection)):
     try:
+        print("✅ Iniciando login con:", data.correo)
+
         user = db.query(Usuario).filter(Usuario.correo == data.correo).first()
         if not user:
             raise HTTPException(status_code=404, detail="Usuario no encontrado")
@@ -21,3 +23,13 @@ def login(data: LoginSchema, db: Session = Depends(get_db_connection)):
     except Exception as e:
         print("💥 Error en login:", str(e))  # Log real del error
         raise HTTPException(status_code=500, detail="Error interno del servidor")
+    
+@router.get("/usuarios-test")
+def obtener_usuarios(db: Session = Depends(get_db_connection)):
+    try:
+        usuarios = db.query(Usuario).all()
+        return usuarios
+    except Exception as e:
+        print("💥 Error al obtener usuarios:", repr(e))
+        raise HTTPException(status_code=500, detail="Error al acceder a la base de datos")
+
