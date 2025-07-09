@@ -1,8 +1,5 @@
-from fastapi import APIRouter, Body, Depends, HTTPException, Request
-from schemas.login_schema import LoginSchema
+from fastapi import APIRouter, Body, Depends, HTTPException
 from db.db_postgres import get_db_connection
-from sqlalchemy.orm import Session
-from models.user_model import User
 from services.product_service import ProductService
 from services.user_service import UserService
 from services.rol_service import RolService
@@ -120,19 +117,3 @@ async def get_all_roles():
 @routes_r.post("/create-rol/")
 async def create_rol(rol: Rol):
     return await rol_service.create_role(rol)
-
-# ruta login
-
-routes_auth = APIRouter(prefix="/auth", tags=["Auth"])
-
-@routes_auth.post("/login")
-def login(data: LoginSchema, db: Session = Depends(get_db_connection)):
-    usuario = db.query(User).filter(User.correo == data.correo).first()
-    if not usuario:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
-    
-    if usuario.contrasena != data.contrasena:
-        raise HTTPException(status_code=401, detail="Contraseña incorrecta")
-    
-    return {"mensaje": "Inicio de sesión exitoso", "usuario_id": usuario.id}
-

@@ -8,7 +8,7 @@ import os
 from routes.routes import routes_p 
 from routes.routes import routes_u
 from routes.routes import routes_r
-from routes.routes import routes_auth
+from routes.auth_routes import router as auth_routes
 
 
 app = FastAPI()
@@ -22,7 +22,7 @@ load_dotenv()
 app.include_router(routes_p)
 app.include_router(routes_u)
 app.include_router(routes_r)
-app.include_router(routes_auth)
+app.include_router(auth_routes)
 
 app.add_middleware(
     CORSMiddleware,
