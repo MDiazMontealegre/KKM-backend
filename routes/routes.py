@@ -9,6 +9,8 @@ from services.rol_service import RolService
 from models.product_model import Product
 from models.user_model import User
 from models.rol_model import Rol
+from fastapi.responses import FileResponse
+import csv
 
 
 routes_p = APIRouter(prefix="/product", tags=["Product"])
@@ -36,6 +38,24 @@ async def add_product(product: Product):
 async def change_product_status(product_id: int):
     return await product_service.toggle_product_status(product_id)
 
+@routes_p.get("/export-products")
+async def export_products():
+    con = get_db_connection()
+    cursor = con.cursor()
+    cursor.execute("SELECT * FROM producto")
+    products = cursor.fetchall()
+    header = [desc[0] for desc in cursor.description]
+
+    filename = "productos_exportados.csv"
+    filepath = f"/tmp/{filename}"
+
+    with open(filepath, mode='w', newline='', encoding='utf-8') as file:
+        writer = csv.writer(file)
+        writer.writerow(header)
+        writer.writerows(products)
+
+    return FileResponse(filepath, filename=filename, media_type='text/csv')
+
 #rutas usuario
 
 routes_u = APIRouter(prefix="/user", tags=["User"])
@@ -62,6 +82,28 @@ async def update_user(user_id: int, contrasena: str = Body(..., embed=True)):
 @routes_u.patch("/change-status/{user_id}")
 async def change_user_status(user_id: int):
     return await user_service.toggle_user_status(user_id)
+
+@routes_u.get("/export-users")
+async def export_users():
+    con = get_db_connection()
+    cursor = con.cursor()
+    cursor.execute("""
+        SELECT u.id, u.nombre as nombreu, u.correo, r.nombre as rol, u.estado 
+        FROM usuario u
+        JOIN rol r ON u.rol_id = r.id
+    """)
+    users = cursor.fetchall()
+    header = [desc[0] for desc in cursor.description]
+
+    filename = "usuarios_exportados.csv"
+    filepath = f"/tmp/{filename}"
+
+    with open(filepath, mode='w', newline='', encoding='utf-8') as file:
+        writer = csv.writer(file)
+        writer.writerow(header)
+        writer.writerows(users)
+
+    return FileResponse(filepath, filename=filename, media_type='text/csv')
 
 
 # rutas rol
@@ -93,3 +135,4 @@ def login(data: LoginSchema, db: Session = Depends(get_db_connection)):
         raise HTTPException(status_code=401, detail="Contraseña incorrecta")
     
     return {"mensaje": "Inicio de sesión exitoso", "usuario_id": usuario.id}
+
