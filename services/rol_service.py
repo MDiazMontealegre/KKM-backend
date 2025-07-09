@@ -6,7 +6,7 @@ from models.rol_model import Rol
 
 class RolService:
 
-    async def get_roles(self):
+    def get_roles(self):
         """Consulta de todos los roles"""
         con = None
         try:
@@ -27,7 +27,7 @@ class RolService:
             if con:
                 con.close()
 
-    async def create_role(self, role_data: Rol):
+    def create_role(self, role_data: Rol):
         """Crear un nuevo rol"""
         con = None
         try:

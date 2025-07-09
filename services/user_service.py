@@ -13,7 +13,7 @@ class UserService:
         if self.con is None:
             raise Exception("No se pudo establecer conexión con la base de datos")
 
-    async def get_users(self):
+    def get_users(self):
         """Consulta de todos los usuarios"""
         con = None
         try:
@@ -29,7 +29,7 @@ class UserService:
         except Exception as e:
             return JSONResponse(content={"success": False, "message": f"Error al consultar bolsillos: {str(e)}"}, status_code=500)
     
-    async def get_user_by_id(self, user_id: int):
+    def get_user_by_id(self, user_id: int):
         """Consulta de un usuario por su ID"""
         con = None
         try:
@@ -50,7 +50,7 @@ class UserService:
         except Exception as e:
             return JSONResponse(content={"success": False, "message": f"Error al consultar el usuario: {str(e)}"}, status_code=500)
 
-    async def create_user(self, user_data: User):
+    def create_user(self, user_data: User):
             """Crear un nuevo usuario"""
             conn= None
             try:
@@ -75,7 +75,7 @@ class UserService:
                 self.con.rollback()
                 return JSONResponse(content={"success": False, "message": f"Error al crear Usuario: {str(e)}"}, status_code=500)          
     
-    async def update_user(self, user_id: int, new_contrasena: int):
+    def update_user(self, user_id: int, new_contrasena: int):
         """Actualizar la contraseña de un usuario"""
         con = None
         try:
@@ -103,7 +103,7 @@ class UserService:
             if con:
                 con.close()
 
-    async def toggle_user_status(self, user_id: int):
+    def toggle_user_status(self, user_id: int):
         con = None
         try:
             con = get_db_connection()  # Asegura una nueva conexión fresca

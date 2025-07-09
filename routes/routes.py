@@ -16,27 +16,27 @@ product_service = ProductService()
 product_model= Product
 
 @routes_p.get("/get-products")
-async def get_all_products():
-    return await product_service.get_products()
+def get_all_products():
+    return product_service.get_products()
 
 @routes_p.get("/get-product/{product_id}")
-async def get_product(product_id: int):
-    return await product_service.get_product_by_id(product_id)
+def get_product(product_id: int):
+    return product_service.get_product_by_id(product_id)
 
 @routes_p.put("/update-product/{product_id}")
-async def update_product(product_id: int, product_data: Product):
-    return await product_service.update_product(product_id, product_data)
+def update_product(product_id: int, product_data: Product):
+    return product_service.update_product(product_id, product_data)
 
 @routes_p.post("/add-product")
-async def add_product(product: Product):
-    return await product_service.add_product(product)
+def add_product(product: Product):
+    return product_service.add_product(product)
 
 @routes_p.patch("/change-status/{product_id}")
-async def change_product_status(product_id: int):
-    return await product_service.toggle_product_status(product_id)
+def change_product_status(product_id: int):
+    return product_service.toggle_product_status(product_id)
 
 @routes_p.get("/export-products")
-async def export_products():
+def export_products():
     con = get_db_connection()
     cursor = con.cursor()
     cursor.execute("SELECT * FROM producto")
@@ -61,27 +61,27 @@ user_service = UserService()
 user_model= User
 
 @routes_u.get("/get-users/")
-async def get_all_users():
-    return await user_service.get_users()
+def get_all_users():
+    return user_service.get_users()
 
 @routes_u.get("/get-user/{user_id}")
-async def get_user(user_id: int):
-    return await user_service.get_user_by_id(user_id)
+def get_user(user_id: int):
+    return user_service.get_user_by_id(user_id)
 
 @routes_u.post("/create-user/")
-async def create_user(user: User):
-    return await user_service.create_user(user)
+def create_user(user: User):
+    return user_service.create_user(user)
 
 @routes_u.put("/update-user/{user_id}")
-async def update_user(user_id: int, contrasena: str = Body(..., embed=True)):
-    return await user_service.update_user(user_id, contrasena)
+def update_user(user_id: int, contrasena: str = Body(..., embed=True)):
+    return user_service.update_user(user_id, contrasena)
 
 @routes_u.patch("/change-status/{user_id}")
-async def change_user_status(user_id: int):
-    return await user_service.toggle_user_status(user_id)
+def change_user_status(user_id: int):
+    return user_service.toggle_user_status(user_id)
 
 @routes_u.get("/export-users")
-async def export_users():
+def export_users():
     con = get_db_connection()
     cursor = con.cursor()
     cursor.execute("""
@@ -111,9 +111,9 @@ rol_service= RolService()
 rol_model= Rol
 
 @routes_r.get("/get-roles/")
-async def get_all_roles():
-    return await rol_service.get_roles()
+def get_all_roles():
+    return rol_service.get_roles()
 
 @routes_r.post("/create-rol/")
-async def create_rol(rol: Rol):
-    return await rol_service.create_role(rol)
+def create_rol(rol: Rol):
+    return rol_service.create_role(rol)

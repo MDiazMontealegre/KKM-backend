@@ -12,7 +12,7 @@ class ProductService:
         if self.con is None:
             raise Exception("No se pudo establecer conexión con la base de datos")
 
-    async def get_products(self):
+    def get_products(self):
         """Consulta de todos los productos"""
         con = None
         try:
@@ -33,7 +33,7 @@ class ProductService:
             if con:
                 con.close()
 
-    async def get_product_by_id(self, product_id: int):
+    def get_product_by_id(self, product_id: int):
         """Consulta de un producto por su ID"""
         con = None
         try:
@@ -61,7 +61,7 @@ class ProductService:
             if con:
                 con.close()
 
-    async def update_product(self, product_id: int, product_data: Product):
+    def update_product(self, product_id: int, product_data: Product):
         """
         Actualiza los datos de un producto excepto el campo 'estado'.
         """
@@ -106,7 +106,7 @@ class ProductService:
         finally:
             self.close_connection()
 
-    async def add_product(self, product_data: Product):
+    def add_product(self, product_data: Product):
         """Agregar un nuevo producto"""
         con = None
         try:
@@ -152,7 +152,7 @@ class ProductService:
             if con:
                 con.close()
 
-    async def toggle_product_status(self, product_id: int):
+    def toggle_product_status(self, product_id: int):
         con = None
         try:
             con = get_db_connection()  # Asegura una nueva conexión fresca
